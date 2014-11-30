@@ -7,7 +7,7 @@
     "postinstall": "make"
   },
   "dependencies": {
-    "libtommath-c": "quartzjer/libtommath-c"
+    "libtommath-c": "quartzjer/libtommath-c#develop"
   },
   "repository": {
     "type": "git",
