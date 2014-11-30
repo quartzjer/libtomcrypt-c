@@ -55,6 +55,7 @@ timing.exe
 *.gcda
 *.gcno
 *.gcov
+node_modules/
 
 # coverity intermediate directory etc.
 cov-int/
