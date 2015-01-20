@@ -4,7 +4,7 @@
   "description": "libtomcrypt's c source bundled and published in npm",
   "scripts": {
     "test": "./testme.sh \"makefile -j3\" \"-DUSE_LTM -DLTM_DESC -I./node_modules/libtommath-c\" ./node_modules/libtommath-c/libtommath.a",
-    "postinstall": "make"
+    "postinstall": "CFLAGS=\"-DUSE_LTM -DLTM_DESC -I./node_modules/libtommath-c/\" make"
   },
   "dependencies": {
     "libtommath-c": "quartzjer/libtommath-c#develop"
