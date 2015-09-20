@@ -45,6 +45,9 @@
    #endif
 #define XMEMCMP  memcmp
 #endif
+#ifndef XMEM_NEQ
+#define XMEM_NEQ  mem_neq
+#endif
 #ifndef XSTRCMP
    #ifdef strcmp
    #define LTC_NO_PROTOTYPES
@@ -77,6 +80,7 @@
   #define LTC_NO_PK
   #define LTC_NO_PKCS
   #define LTC_NO_MISC
+  #define LTC_NO_FILE
 #endif /* LTC_NOTHING */
 
 /* Easy button? */
@@ -98,6 +102,7 @@
    #define LTC_SHA384
    #define LTC_SHA256
    #define LTC_SHA224
+   #define LTC_HASH_HELPERS
 
    #define LTC_NO_MACS
    #define LTC_HMAC
@@ -109,6 +114,8 @@
    #define LTC_YARROW
    #define LTC_DEVRANDOM
    #define LTC_TRY_URANDOM_FIRST
+   #define LTC_RNG_GET_BYTES
+   #define LTC_RNG_MAKE_PRNG
 
    #define LTC_NO_PK
    #define LTC_MRSA
@@ -116,6 +123,19 @@
 
    #define LTC_NO_MISC
    #define LTC_BASE64
+#endif
+
+/* The minimal set of functionality to run the tests */
+#ifdef LTC_MINIMAL
+   #define LTC_SHA256
+   #define LTC_CTR_MODE
+   #define LTC_RNG_MAKE_PRNG
+   #define LTC_RNG_GET_BYTES
+   #define LTC_YARROW
+   #define LTC_DEVRANDOM
+   #define LTC_TRY_URANDOM_FIRST
+
+   #undef LTC_NO_FILE
 #endif
 
 /* Enable self-test test vector checking */
@@ -241,7 +261,10 @@
 #define LTC_RIPEMD256
 #define LTC_RIPEMD320
 
+#define LTC_HASH_HELPERS
+
 #endif /* LTC_NO_HASHES */
+
 
 /* ---> MAC functions <--- */
 #ifndef LTC_NO_MACS
@@ -274,6 +297,7 @@
 
 #endif /* LTC_NO_MACS */
 
+
 /* --> Pseudo Random Number Generators <--- */
 #ifndef LTC_NO_PRNGS
 
@@ -295,31 +319,42 @@
 
 /* Fortuna PRNG */
 #define LTC_FORTUNA
-/* reseed every N calls to the read function */
-#define LTC_FORTUNA_WD    10
-/* number of pools (4..32) can save a bit of ram by lowering the count */
-#define LTC_FORTUNA_POOLS 32
 
 /* Greg's LTC_SOBER128 PRNG ;-0 */
 #define LTC_SOBER128
 
 /* the *nix style /dev/random device */
 #define LTC_DEVRANDOM
-/* try /dev/urandom before trying /dev/random */
+/* try /dev/urandom before trying /dev/random
+ * are you sure you want to disable this? http://www.2uo.de/myths-about-urandom/ */
 #define LTC_TRY_URANDOM_FIRST
+/* rng_get_bytes() */
+#define LTC_RNG_GET_BYTES
+/* rng_make_prng() */
+#define LTC_RNG_MAKE_PRNG
 
 #endif /* LTC_NO_PRNGS */
+
+#ifdef LTC_FORTUNA
+
+#ifndef LTC_FORTUNA_WD
+/* reseed every N calls to the read function */
+#define LTC_FORTUNA_WD    10
+#endif
+
+#ifndef LTC_FORTUNA_POOLS
+/* number of pools (4..32) can save a bit of ram by lowering the count */
+#define LTC_FORTUNA_POOLS 32
+#endif
+
+#endif /* LTC_FORTUNA */
+
 
 /* ---> Public Key Crypto <--- */
 #ifndef LTC_NO_PK
 
 /* Include RSA support */
 #define LTC_MRSA
-
-#ifndef LTC_NO_RSA_BLINDING
-/* Enable RSA blinding when doing private key operations by default */
-#define LTC_RSA_BLINDING
-#endif  /* LTC_NO_RSA_BLINDING */
 
 /* Include Diffie-Hellman support */
 #ifndef GMP_DESC
@@ -360,12 +395,46 @@
 /* do we want fixed point ECC */
 /* #define LTC_MECC_FP */
 
-#ifndef LTC_NO_ECC_TIMING_RESISTANT
+#endif /* LTC_NO_PK */
+
+#if defined(LTC_MRSA) && !defined(LTC_NO_RSA_BLINDING)
+/* Enable RSA blinding when doing private key operations by default */
+#define LTC_RSA_BLINDING
+#endif  /* LTC_NO_RSA_BLINDING */
+
+#if defined(LTC_MRSA) && !defined(LTC_NO_RSA_CRT_HARDENING)
+/* Enable RSA CRT hardening when doing private key operations by default */
+#define LTC_RSA_CRT_HARDENING
+#endif  /* LTC_NO_RSA_CRT_HARDENING */
+
+#if defined(LTC_MECC) && !defined(LTC_NO_ECC_TIMING_RESISTANT)
 /* Enable ECC timing resistant version by default */
 #define LTC_ECC_TIMING_RESISTANT
 #endif
 
-#endif /* LTC_NO_PK */
+/* define these PK sizes out of LTC_NO_PK
+ * to have them always defined
+ */
+#if defined(LTC_MRSA)
+/* Min and Max RSA key sizes (in bits) */
+#ifndef MIN_RSA_SIZE
+#define MIN_RSA_SIZE 1024
+#endif
+#ifndef MAX_RSA_SIZE
+#define MAX_RSA_SIZE 4096
+#endif
+#endif
+
+/* in cases where you want ASN.1/DER functionality, but no
+ * RSA, you can define this externally if 1024 is not enough
+ */
+#if defined(LTC_MRSA)
+#define LTC_DER_MAX_PUBKEY_SIZE MAX_RSA_SIZE
+#elif !defined(LTC_DER_MAX_PUBKEY_SIZE)
+/* this includes DSA */
+#define LTC_DER_MAX_PUBKEY_SIZE 1024
+#endif
+
 
 /* PKCS #1 (RSA) and #5 (Password Handling) stuff */
 #ifndef LTC_NO_PKCS
@@ -392,6 +461,10 @@
 /* HKDF Key Derivation/Expansion stuff */
 #define LTC_HKDF
 #endif /* LTC_NO_HKDF */
+
+#define LTC_ADLER32
+
+#define LTC_CRC32
 
 #endif /* LTC_NO_MISC */
 

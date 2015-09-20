@@ -451,13 +451,14 @@ int time_keysched(void)
 
 int time_cipher(void)
 {
+  fprintf(stderr, "\n\nECB Time Trials for the Symmetric Ciphers:\n");
+#ifdef LTC_ECB_MODE
   unsigned long x, y1;
   ulong64  t1, t2, c1, c2, a1, a2;
   symmetric_ECB ecb;
   unsigned char key[MAXBLOCKSIZE], pt[4096];
   int err;
 
-  fprintf(stderr, "\n\nECB Time Trials for the Symmetric Ciphers:\n");
   no_results = 0;
   for (x = 0; cipher_descriptor[x].name != NULL; x++) {
     ecb_start(x, key, cipher_descriptor[x].min_key_length, 0, &ecb);
@@ -516,6 +517,9 @@ int time_cipher(void)
 #undef DO1
    }
    tally_results(1);
+#else
+   fprintf(stderr, "NOP");
+#endif
 
    return 0;
 }
@@ -1171,28 +1175,28 @@ void time_ecc(void)
    unsigned long i, w, x, y, z;
    int           err, stat;
    static unsigned long sizes[] = {
-#ifdef ECC112
+#ifdef LTC_ECC112
 112/8,
 #endif
-#ifdef ECC128
+#ifdef LTC_ECC128
 128/8,
 #endif
-#ifdef ECC160
+#ifdef LTC_ECC160
 160/8,
 #endif
-#ifdef ECC192
+#ifdef LTC_ECC192
 192/8,
 #endif
-#ifdef ECC224
+#ifdef LTC_ECC224
 224/8,
 #endif
-#ifdef ECC256
+#ifdef LTC_ECC256
 256/8,
 #endif
-#ifdef ECC384
+#ifdef LTC_ECC384
 384/8,
 #endif
-#ifdef ECC521
+#ifdef LTC_ECC521
 521/8,
 #endif
 100000};
@@ -1312,6 +1316,7 @@ void time_ecc(void) { fprintf(stderr, "NO ECC\n"); }
 
 void time_macs_(unsigned long MAC_SIZE)
 {
+#if defined(LTC_OMAC) || defined(LTC_XCBC) || defined(LTC_F9_MODE) || defined(LTC_PMAC) || defined(LTC_PELICAN) || defined(LTC_HMAC)
    unsigned char *buf, key[16], tag[16];
    ulong64 t1, t2;
    unsigned long x, z;
@@ -1433,6 +1438,10 @@ void time_macs_(unsigned long MAC_SIZE)
 #endif
 
    XFREE(buf);
+#else
+   LTC_UNUSED_PARAM(MAC_SIZE);
+   fprintf(stderr, "NO MACs\n");
+#endif
 }
 
 void time_macs(void)
@@ -1444,6 +1453,7 @@ void time_macs(void)
 
 void time_encmacs_(unsigned long MAC_SIZE)
 {
+#if defined(LTC_EAX_MODE) || defined(LTC_OCB_MODE) || defined(LTC_OCB3_MODE) || defined(LTC_CCM_MODE) || defined(LTC_GCM_MODE)
    unsigned char *buf, IV[16], key[16], tag[16];
    ulong64 t1, t2;
    unsigned long x, z;
@@ -1599,6 +1609,10 @@ __attribute__ ((aligned (16)))
    fprintf(stderr, "GCM (precomp)\t\t%9"PRI64"u\n", t2/(ulong64)(MAC_SIZE*1024));
    }
 
+#endif
+#else
+   LTC_UNUSED_PARAM(MAC_SIZE);
+   fprintf(stderr, "NO ENCMACs\n");
 #endif
 
 }

@@ -28,10 +28,6 @@ int pk_get_oid(int pk, oid_st *st);
 /* ---- RSA ---- */
 #ifdef LTC_MRSA
 
-/* Min and Max RSA key sizes (in bits) */
-#define MIN_RSA_SIZE 1024
-#define MAX_RSA_SIZE 4096
-
 /** RSA PKCS style key */
 typedef struct Rsa_key {
     /** Type of key, PK_PRIVATE or PK_PUBLIC */
@@ -305,9 +301,17 @@ int  ecc_decrypt_key(const unsigned char *in,  unsigned long  inlen,
                            unsigned char *out, unsigned long *outlen,
                            ecc_key *key);
 
+int ecc_sign_hash_raw(const unsigned char *in,  unsigned long inlen,
+                            void   *r,   void *s,
+                            prng_state *prng, int wprng, ecc_key *key);
+
 int  ecc_sign_hash(const unsigned char *in,  unsigned long inlen,
                          unsigned char *out, unsigned long *outlen,
                          prng_state *prng, int wprng, ecc_key *key);
+
+int ecc_verify_hash_raw(      void   *r, void   *s,
+                        const unsigned char *hash, unsigned long hashlen,
+                        int *stat, ecc_key *key);
 
 int  ecc_verify_hash(const unsigned char *sig,  unsigned long siglen,
                      const unsigned char *hash, unsigned long hashlen,

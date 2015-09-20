@@ -12,6 +12,7 @@ testok.txt
 test_*.txt
 tv.txt
 *_tv.txt
+doxygen/
 
 # *nix/windows test executables
 constants
@@ -56,6 +57,9 @@ timing.exe
 *.gcno
 *.gcov
 node_modules/
+
+coverage/
+coverage*.info
 
 # coverity intermediate directory etc.
 cov-int/

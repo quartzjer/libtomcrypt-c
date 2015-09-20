@@ -54,7 +54,7 @@ int der_decode_subject_public_key_info(const unsigned char *in, unsigned long in
    }
 
    /* see if the OpenSSL DER format RSA public key will work */
-   tmpbuf = XCALLOC(1, MAX_RSA_SIZE*8);
+   tmpbuf = XCALLOC(1, LTC_DER_MAX_PUBKEY_SIZE*8);
    if (tmpbuf == NULL) {
        err = CRYPT_MEM;
        goto LBL_ERR;
@@ -68,7 +68,7 @@ int der_decode_subject_public_key_info(const unsigned char *in, unsigned long in
     * in a **BIT** string ... so we have to extract it then proceed to convert bit to octet
     */
    LTC_SET_ASN1(subject_pubkey, 0, LTC_ASN1_SEQUENCE, alg_id, 2);
-   LTC_SET_ASN1(subject_pubkey, 1, LTC_ASN1_RAW_BIT_STRING, tmpbuf, MAX_RSA_SIZE*8);
+   LTC_SET_ASN1(subject_pubkey, 1, LTC_ASN1_RAW_BIT_STRING, tmpbuf, LTC_DER_MAX_PUBKEY_SIZE*8);
 
    err=der_decode_sequence(in, inlen, subject_pubkey, 2UL);
    if (err != CRYPT_OK) {
@@ -76,7 +76,7 @@ int der_decode_subject_public_key_info(const unsigned char *in, unsigned long in
    }
 
    if ((alg_id[0].size != oid.OIDlen) ||
-       memcmp(oid.OID, alg_id[0].data, oid.OIDlen * sizeof(oid.OID[0]))) {
+        XMEMCMP(oid.OID, alg_id[0].data, oid.OIDlen * sizeof(oid.OID[0]))) {
         /* OID mismatch */
         err = CRYPT_PK_INVALID_TYPE;
         goto LBL_ERR;
@@ -84,7 +84,7 @@ int der_decode_subject_public_key_info(const unsigned char *in, unsigned long in
 
    len = subject_pubkey[1].size/8;
    if (*public_key_len > len) {
-       memcpy(public_key, subject_pubkey[1].data, len);
+       XMEMCPY(public_key, subject_pubkey[1].data, len);
        *public_key_len = len;
     } else {
         *public_key_len = len;

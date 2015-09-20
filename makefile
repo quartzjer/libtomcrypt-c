@@ -3,67 +3,23 @@
 # Tom St Denis
 # Modified by Clay Culver
 
+include makefile.include
+
+CFLAGS += -c
+
 # The version
 VERSION=1.17
 
 PLATFORM := $(shell uname | sed -e 's/_.*//')
 
-# Compiler and Linker Names
-ifndef PREFIX
-  PREFIX=
-endif
-
-ifeq ($(CC),cc)
-  CC = $(PREFIX)gcc
-endif
-LD=$(PREFIX)ld
-AR=$(PREFIX)ar
-
-# Archiver [makes .a files]
-#AR=ar
-#ARFLAGS=r
-
-ifndef MAKE
-  MAKE=make
-endif
-
 # ranlib tools
 ifndef RANLIB
 ifeq ($(PLATFORM), Darwin)
-RANLIB=$(PREFIX)ranlib -c
+RANLIB:=$(PREFIX)ranlib -c
 else
-RANLIB=$(PREFIX)ranlib
+RANLIB:=$(PREFIX)ranlib
 endif
 endif
-
-# Compilation flags. Note the += does not write over the user's CFLAGS!
-CFLAGS += -c -I./testprof/ -I./src/headers/ -Wall -Wsign-compare -W -Wshadow -DLTC_SOURCE
-
-# additional warnings (newer GCC 3.4 and higher)
-ifdef GCC_34
-CFLAGS += -Wsystem-headers -Wdeclaration-after-statement -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wmissing-prototypes \
-		  -Wmissing-declarations -Wpointer-arith
-endif
-
-ifndef IGNORE_SPEED
-
-# optimize for SPEED
-CFLAGS += -O3 -funroll-loops
-
-# add -fomit-frame-pointer.  hinders debugging!
-CFLAGS += -fomit-frame-pointer
-
-# optimize for SIZE
-#CFLAGS += -Os -DLTC_SMALL_CODE
-
-endif
-
-# older GCCs can't handle the "rotate with immediate" ROLc/RORc/etc macros
-# define this to help
-#CFLAGS += -DLTC_NO_ROLC
-
-# compile for DEBUGING (required for ccmalloc checking!!!)
-#CFLAGS += -g3 -DLTC_NO_ASM
 
 #Output filenames for various targets.
 ifndef LIBNAME
@@ -74,56 +30,16 @@ ifndef LIBTEST
 endif
 LIBTEST_S=$(LIBTEST)
 
-HASH=hashsum
-CRYPT=encrypt
-SMALL=small
-TV=tv_gen
-MULTI=multi
-TIMING=timing
-TEST=test
-SIZES=sizes
-CONSTANTS=constants
-
-#LIBPATH-The directory for libtomcrypt to be installed to.
-#INCPATH-The directory to install the header files for libtomcrypt.
-#DATAPATH-The directory to install the pdf docs.
-ifndef DESTDIR
-   DESTDIR=
-endif
-
-ifndef LIBPATH
-   LIBPATH=/usr/lib
-endif
-ifndef INCPATH
-   INCPATH=/usr/include
-endif
-ifndef DATAPATH
-   DATAPATH=/usr/share/doc/libtomcrypt/pdf
-endif
-
-#Who do we install as?
-ifdef INSTALL_USER
-USER=$(INSTALL_USER)
-else
-USER=root
-endif
-
-ifdef INSTALL_GROUP
-GROUP=$(INSTALL_GROUP)
-else
-GROUP=wheel
-endif
-
 #List of objects to compile.
 #START_INS
 OBJECTS=src/ciphers/aes/aes_enc.o src/ciphers/aes/aes.o src/ciphers/anubis.o src/ciphers/blowfish.o \
 src/ciphers/camellia.o src/ciphers/cast5.o src/ciphers/des.o src/ciphers/kasumi.o src/ciphers/khazad.o \
 src/ciphers/kseed.o src/ciphers/multi2.o src/ciphers/noekeon.o src/ciphers/rc2.o src/ciphers/rc5.o \
 src/ciphers/rc6.o src/ciphers/safer/safer.o src/ciphers/safer/saferp.o src/ciphers/skipjack.o \
-src/ciphers/twofish/twofish.o src/ciphers/xtea.o src/encauth/ccm/ccm_memory.o \
-src/encauth/ccm/ccm_done.o src/encauth/ccm/ccm_process.o src/encauth/ccm/ccm_reset.o \
-src/encauth/ccm/ccm_add_aad.o src/encauth/ccm/ccm_init.o src/encauth/ccm/ccm_add_nonce.o \
-src/encauth/ccm/ccm_memory_ex.o src/encauth/ccm/ccm_test.o src/encauth/eax/eax_addheader.o \
+src/ciphers/twofish/twofish.o src/ciphers/xtea.o src/encauth/ccm/ccm_add_aad.o \
+src/encauth/ccm/ccm_add_nonce.o src/encauth/ccm/ccm_done.o src/encauth/ccm/ccm_init.o \
+src/encauth/ccm/ccm_memory.o src/encauth/ccm/ccm_memory_ex.o src/encauth/ccm/ccm_process.o \
+src/encauth/ccm/ccm_reset.o src/encauth/ccm/ccm_test.o src/encauth/eax/eax_addheader.o \
 src/encauth/eax/eax_decrypt.o src/encauth/eax/eax_decrypt_verify_memory.o src/encauth/eax/eax_done.o \
 src/encauth/eax/eax_encrypt_authenticate_memory.o src/encauth/eax/eax_encrypt.o \
 src/encauth/eax/eax_init.o src/encauth/eax/eax_test.o src/encauth/gcm/gcm_add_aad.o \
@@ -159,21 +75,22 @@ src/mac/pmac/pmac_shift_xor.o src/mac/pmac/pmac_test.o src/mac/xcbc/xcbc_done.o 
 src/mac/xcbc/xcbc_file.o src/mac/xcbc/xcbc_init.o src/mac/xcbc/xcbc_memory.o \
 src/mac/xcbc/xcbc_memory_multi.o src/mac/xcbc/xcbc_process.o src/mac/xcbc/xcbc_test.o \
 src/math/fp/ltc_ecc_fp_mulmod.o src/math/gmp_desc.o src/math/ltm_desc.o src/math/multi.o \
-src/math/rand_bn.o src/math/rand_prime.o src/math/tfm_desc.o src/misc/base64/base64_decode.o \
-src/misc/base64/base64_encode.o src/misc/burn_stack.o src/misc/crypt/crypt_argchk.o \
-src/misc/crypt/crypt.o src/misc/crypt/crypt_cipher_descriptor.o src/misc/crypt/crypt_cipher_is_valid.o \
-src/misc/crypt/crypt_constants.o src/misc/crypt/crypt_find_cipher_any.o \
-src/misc/crypt/crypt_find_cipher.o src/misc/crypt/crypt_find_cipher_id.o \
-src/misc/crypt/crypt_find_hash_any.o src/misc/crypt/crypt_find_hash.o \
-src/misc/crypt/crypt_find_hash_id.o src/misc/crypt/crypt_find_hash_oid.o \
-src/misc/crypt/crypt_find_prng.o src/misc/crypt/crypt_fsa.o src/misc/crypt/crypt_hash_descriptor.o \
-src/misc/crypt/crypt_hash_is_valid.o src/misc/crypt/crypt_inits.o \
-src/misc/crypt/crypt_ltc_mp_descriptor.o src/misc/crypt/crypt_prng_descriptor.o \
-src/misc/crypt/crypt_prng_is_valid.o src/misc/crypt/crypt_register_cipher.o \
-src/misc/crypt/crypt_register_hash.o src/misc/crypt/crypt_register_prng.o src/misc/crypt/crypt_sizes.o \
+src/math/rand_bn.o src/math/rand_prime.o src/math/tfm_desc.o src/misc/adler32.o \
+src/misc/base64/base64_decode.o src/misc/base64/base64_encode.o src/misc/burn_stack.o src/misc/crc32.o \
+src/misc/crypt/crypt_argchk.o src/misc/crypt/crypt.o src/misc/crypt/crypt_cipher_descriptor.o \
+src/misc/crypt/crypt_cipher_is_valid.o src/misc/crypt/crypt_constants.o \
+src/misc/crypt/crypt_find_cipher_any.o src/misc/crypt/crypt_find_cipher.o \
+src/misc/crypt/crypt_find_cipher_id.o src/misc/crypt/crypt_find_hash_any.o \
+src/misc/crypt/crypt_find_hash.o src/misc/crypt/crypt_find_hash_id.o \
+src/misc/crypt/crypt_find_hash_oid.o src/misc/crypt/crypt_find_prng.o src/misc/crypt/crypt_fsa.o \
+src/misc/crypt/crypt_hash_descriptor.o src/misc/crypt/crypt_hash_is_valid.o \
+src/misc/crypt/crypt_inits.o src/misc/crypt/crypt_ltc_mp_descriptor.o \
+src/misc/crypt/crypt_prng_descriptor.o src/misc/crypt/crypt_prng_is_valid.o \
+src/misc/crypt/crypt_register_cipher.o src/misc/crypt/crypt_register_hash.o \
+src/misc/crypt/crypt_register_prng.o src/misc/crypt/crypt_sizes.o \
 src/misc/crypt/crypt_unregister_cipher.o src/misc/crypt/crypt_unregister_hash.o \
 src/misc/crypt/crypt_unregister_prng.o src/misc/error_to_string.o src/misc/hkdf/hkdf.o \
-src/misc/hkdf/hkdf_test.o src/misc/pkcs5/pkcs_5_1.o src/misc/pkcs5/pkcs_5_2.o \
+src/misc/hkdf/hkdf_test.o src/misc/mem_neq.o src/misc/pkcs5/pkcs_5_1.o src/misc/pkcs5/pkcs_5_2.o \
 src/misc/pkcs5/pkcs_5_test.o src/misc/pk_get_oid.o src/misc/zeromem.o src/modes/cbc/cbc_decrypt.o \
 src/modes/cbc/cbc_done.o src/modes/cbc/cbc_encrypt.o src/modes/cbc/cbc_getiv.o \
 src/modes/cbc/cbc_setiv.o src/modes/cbc/cbc_start.o src/modes/cfb/cfb_decrypt.o \
@@ -246,11 +163,11 @@ src/pk/rsa/rsa_sign_saltlen_get.o src/pk/rsa/rsa_verify_hash.o src/prngs/fortuna
 src/prngs/rng_get_bytes.o src/prngs/rng_make_prng.o src/prngs/sober128.o src/prngs/sprng.o \
 src/prngs/yarrow.o
 
-HEADERS=src/headers/tomcrypt_custom.h src/headers/tomcrypt_argchk.h src/headers/tomcrypt_macros.h \
-src/headers/tomcrypt_pk.h src/headers/tomcrypt_cipher.h src/headers/tomcrypt_misc.h \
-src/headers/tomcrypt_hash.h src/headers/tomcrypt.h src/headers/tomcrypt_math.h \
-src/headers/tomcrypt_prng.h src/headers/tomcrypt_mac.h src/headers/tomcrypt_cfg.h \
-src/headers/tomcrypt_pkcs.h testprof/tomcrypt_test.h
+HEADERS=src/headers/tomcrypt_argchk.h src/headers/tomcrypt_cfg.h src/headers/tomcrypt_cipher.h \
+src/headers/tomcrypt_custom.h src/headers/tomcrypt.h src/headers/tomcrypt_hash.h \
+src/headers/tomcrypt_mac.h src/headers/tomcrypt_macros.h src/headers/tomcrypt_math.h \
+src/headers/tomcrypt_misc.h src/headers/tomcrypt_pkcs.h src/headers/tomcrypt_pk.h \
+src/headers/tomcrypt_prng.h testprof/tomcrypt_test.h
 
 #END_INS
 
@@ -358,6 +275,35 @@ profile:
 	rm -f timing `find . -type f | grep [.][ao] | xargs`
 	CFLAGS="$(CFLAGS) -fprofile-use" $(MAKE) timing EXTRALIBS="$(EXTRALIBS) -lgcov"
 
+# target that pre-processes all coverage data
+lcov-single-create:
+	lcov --capture --no-external --directory src -q --output-file coverage_std.info
+
+# target that removes all coverage output
+cleancov-clean:
+	rm -f `find . -type f -name "*.info" | xargs`
+	rm -rf coverage/
+
+# generates html output from all coverage_*.info files
+lcov:
+	lcov `find -name 'coverage_*.info' -exec echo -n " -a {}" \;` -o coverage.info -q 2>/dev/null
+	genhtml coverage.info --output-directory coverage -q
+
+# combines all necessary steps to create the coverage from a single testrun with e.g.
+# CFLAGS="-DUSE_LTM -DLTM_DESC -I../libtommath" EXTRALIBS="../libtommath/libtommath.a" make coverage -j9
+lcov-single: | cleancov-clean lcov-single-create lcov
+
+
+#cmake the code coverage of the library
+coverage: CFLAGS += -fprofile-arcs -ftest-coverage
+coverage: EXTRALIBS += -lgcov
+
+coverage: test
+	./test
+
+
+# cleans everything - coverage output and standard 'clean'
+cleancov: cleancov-clean clean
 
 #This rule cleans the source tree of all compiled code, not including the pdf
 #documentation.
@@ -440,6 +386,12 @@ zipup: no_oops docs
 	gpg -b -a crypt-$(VERSION).tar.bz2 ; gpg -b -a crypt-$(VERSION).zip ; \
 	mv -fv crypt* ~ ; rm -rf libtomcrypt-$(VERSION)
 
+
+check_defines:
+	cat src/headers/tomcrypt_custom.h | grep '\#define[ \t]*LTC_' | sed -e 's@/\*@@g' -e 's@\*/@@g' -e 's@^[ \t]*@@g' \
+	| cut -d' ' -f 2 | sed -e 's@(x)@@g' | sort | uniq \
+	| grep -v -e 'LTC_ECC[0-9]*' -e 'LTC_DH[0-9]*' -e 'LTC_NO_' -e 'LTC_MUTEX' -e 'LTC_MPI' \
+	| xargs -I '{}' sh -c 'grep -q -m 1 -o {} src/misc/crypt/crypt.c || echo {} not found'
 
 # $Source$
 # $Revision$
